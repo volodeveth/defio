@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Wallet, Smartphone, Globe, ExternalLink } from 'lucide-react';
 import { useConnect, useAccount, useDisconnect } from 'wagmi';
@@ -163,11 +164,11 @@ const WalletConnectModal: React.FC<WalletConnectModalProps> = ({ isOpen, onClose
 
   if (!isOpen) return null;
 
-  return (
+  const modalContent = (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-             style={{ zIndex: 9999 }}>
+        <div className="fixed inset-0 flex items-center justify-center p-4 pt-20"
+             style={{ zIndex: 99999 }}>
         {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -294,6 +295,10 @@ const WalletConnectModal: React.FC<WalletConnectModalProps> = ({ isOpen, onClose
       )}
     </AnimatePresence>
   );
+
+  return typeof window !== 'undefined' 
+    ? createPortal(modalContent, document.body)
+    : null;
 };
 
 export default WalletConnectModal;
