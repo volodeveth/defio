@@ -1,23 +1,22 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useAccount, useConnect, useDisconnect } from 'wagmi';
+import { useAccount, useDisconnect } from 'wagmi';
 import { Wallet, Settings, Share, ExternalLink } from 'lucide-react';
 import { formatAddress } from '@/lib/utils';
+import { useWalletModal } from '@/hooks/useWalletModal';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
+import WalletConnectModal from '@/components/wallet/WalletConnectModal';
 import { cn } from '@/lib/utils';
 
 const Header: React.FC = () => {
   const { address, isConnected, chain } = useAccount();
-  const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
+  const { isOpen, openModal, closeModal } = useWalletModal();
 
   const handleConnect = () => {
-    const coinbaseConnector = connectors.find(c => c.id === 'coinbaseWalletSDK');
-    if (coinbaseConnector) {
-      connect({ connector: coinbaseConnector });
-    }
+    openModal();
   };
 
   return (
@@ -127,6 +126,12 @@ const Header: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {/* Wallet Connect Modal */}
+      <WalletConnectModal 
+        isOpen={isOpen} 
+        onClose={closeModal} 
+      />
     </motion.header>
   );
 };

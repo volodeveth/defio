@@ -8,6 +8,7 @@ import { useSwapStore } from '@/store/swap';
 import { formatNumber, formatCurrency } from '@/lib/utils';
 import { useBestQuote, QuoteParams } from '@/hooks/useQuotes';
 import { useSwap } from '@/hooks/useSwap';
+import { useWalletModal } from '@/hooks/useWalletModal';
 import { BASE_TOKENS, formatTokenAmount, getExchangeRate } from '@/lib/swap-utils';
 import { FEE_CONFIG } from '@/constants/addresses';
 import Card from '@/components/ui/Card';
@@ -20,6 +21,7 @@ import { cn } from '@/lib/utils';
 
 const SwapCard: React.FC = () => {
   const { address } = useAccount();
+  const { openModal } = useWalletModal();
   const {
     tokenIn,
     tokenOut,
@@ -259,7 +261,12 @@ const SwapCard: React.FC = () => {
         {/* Swap Button */}
         <div className="mt-6 space-y-3">
           {!address ? (
-            <Button variant="primary" size="lg" className="w-full">
+            <Button 
+              variant="primary" 
+              size="lg" 
+              className="w-full"
+              onClick={openModal}
+            >
               Connect Wallet
             </Button>
           ) : (
