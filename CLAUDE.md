@@ -6,13 +6,16 @@
 
 Defio is a DeFi aggregator designed as a native experience for both Farcaster and Base App ecosystems. It simplifies DeFi operations on Base network, allowing users to perform swaps, lending, borrowing, and yield farming directly from their social feeds and Base App interface with one-tap simplicity.
 
-## Key Features
+## Key Features ✅ **IMPLEMENTED**
 
-- **Multi-Platform Support**: Native integration with both Farcaster mini-apps and Base App
+- **Multi-Wallet Support**: User-friendly wallet selection with Coinbase Smart Wallet, MetaMask, WalletConnect ✅
+- **Social Login Options**: Farcaster and Base App authentication integration ✅
+- **Real Swap Functionality**: Universal Router + Permit2 for gasless approvals ✅
+- **Multi-DEX Aggregation**: Uniswap v3 + Aerodrome quote comparison ✅
+- **Fee-on-Top Monetization**: 0.15% platform fee via Universal Router commands ✅
+- **Multi-Platform Support**: Native integration with both Farcaster mini-apps and Base App ✅
 - **Social Trading**: Share trades to Farcaster and Base App feeds with copy-trading functionality
-- **Coinbase Smart Wallet**: Deep integration with Base App's native wallet experience
-- **Multi-Protocol Support**: Integrates with Aave, Aerodrome, Uniswap, and Morpho on Base
-- **Base App Native Features**: Leverages Base App's social graph and user profiles
+- **Base App Native Features**: Leverages Base App's social graph and user profiles ✅
 - **Yield Aggregation**: Auto-discovery of best APR opportunities across Base protocols
 - **Risk Management**: Health factor monitoring and liquidation alerts via XMTP and Base App notifications
 - **Gas Sponsorship**: Paymaster integration for first transactions and micro-interactions
@@ -72,7 +75,7 @@ Project deploys automatically to Vercel using deployment token.
 
 **Manual deployment:**
 ```bash
-vercel --token $(cat ../vercel-token.txt)
+vercel --token $(cat "vercel token.txt") --prod
 ```
 
 ### Testing
@@ -117,11 +120,13 @@ defio/
 
 ## Protocol Integrations
 
-### Supported Protocols on Base
-- **Aave v3**: Lending and borrowing
-- **Aerodrome**: DEX swaps and liquidity
-- **Uniswap v3**: Alternative swap routing
-- **Morpho**: Optimized lending markets
+### Supported Protocols on Base ✅ **IMPLEMENTED**
+- **Uniswap v3**: Primary swap routing with QuoterV2 integration ✅
+- **Aerodrome**: DEX swaps and liquidity with direct router integration ✅
+- **Universal Router**: Fee-on-top commands for monetization ✅
+- **Permit2**: Gasless approvals for better UX ✅
+- **Aave v3**: Lending and borrowing (planned)
+- **Morpho**: Optimized lending markets (planned)
 
 ### Data Sources
 - The Graph subgraphs
@@ -130,8 +135,8 @@ defio/
 
 ## Monetization
 
-### Revenue Streams
-1. **Routing Fees**: 0.05-0.15% on swaps
+### Revenue Streams ✅ **IMPLEMENTED**
+1. **Routing Fees**: 0.15% on swaps (fee-on-top via Universal Router)
 2. **Performance Fees**: 5-10% on vault strategies  
 3. **Pro Subscriptions**: $10/month for advanced features
 4. **Social Trading**: Revenue share on copy trades
@@ -170,7 +175,7 @@ All fees are displayed before transaction signing:
 
 ### Manual Deployment
 ```bash
-vercel --token $(cat vercel-token.txt) --prod
+vercel --token $(cat "vercel token.txt") --prod
 ```
 
 ## Roadmap
@@ -185,16 +190,20 @@ vercel --token $(cat vercel-token.txt) --prod
 - [x] Activity history
 - [x] Production deployment
 
-### v1 (4-8 weeks) - **NEXT PHASE**  
-- [ ] Base App native integration
-- [ ] Real Web3 functionality (replace mock data)
+### v1 (4-8 weeks) - **IN PROGRESS**  
+- [x] Real Web3 functionality (Universal Router + Permit2 integration)
+- [x] Multi-wallet support with user choice (Coinbase, MetaMask, WalletConnect)
+- [x] Farcaster authentication integration for frame context
+- [x] Base App native integration with smart wallet detection
+- [x] Real quote aggregation from Uniswap QuoterV2 and Aerodrome
+- [x] Fee-on-top monetization mechanism (0.15% platform fee)
+- [x] Professional swap execution with slippage protection
 - [ ] Aave/Morpho lending integration
 - [ ] Health factor alerts via XMTP and Base App notifications
 - [ ] Portfolio dashboard with Base App social features
 - [ ] Basic yield ranking
 - [ ] Paymaster integration for Base App users
 - [ ] Pro subscription features
-- [ ] Base App social graph integration
 
 ### v2 (8-12 weeks)
 - [ ] Custom vault strategies with performance fees
@@ -265,9 +274,10 @@ vercel --token $(cat vercel-token.txt) --prod
 
 ## 🌐 Live Application
 
-- **Production URL**: https://defio.vercel.app
-- **Farcaster Mini-app**: https://defio.vercel.app/miniapp
-- **OG Image API**: https://defio.vercel.app/api/og
+- **Production URL**: https://defio-hvkf7kkik-volodeveths-projects.vercel.app ✅ **ACTIVE**
+- **GitHub Repository**: https://github.com/volodeveth/defio ✅ **COMMITTED**
+- **Farcaster Mini-app**: https://defio-hvkf7kkik-volodeveths-projects.vercel.app/miniapp
+- **OG Image API**: https://defio-hvkf7kkik-volodeveths-projects.vercel.app/api/og
 
 ## Links
 
@@ -283,12 +293,36 @@ MIT License - see LICENSE file for details
 
 ---
 
+## 🔧 Recent Technical Implementations
+
+### ✅ **Wallet System Overhaul** (Latest Update)
+- **Multi-Wallet Modal**: Replaced forced Base account opening with user choice
+- **Farcaster Auth**: Frame context detection and social authentication
+- **Base App Integration**: Native smart wallet detection and connection
+- **Enhanced UX**: Professional wallet selection interface with recommendations
+
+### ✅ **Real Web3 Swap System** 
+- **Universal Router**: Commands-based swap execution with fee-on-top
+- **Permit2 Integration**: Gasless approvals for better user experience  
+- **Quote Aggregation**: Real-time price comparison between Uniswap v3 and Aerodrome
+- **Revenue Generation**: 0.15% platform fee on all swaps via PAY_PORTION commands
+- **Professional Error Handling**: Comprehensive transaction status management
+
+### ✅ **Production Infrastructure**
+- **GitHub Repository**: https://github.com/volodeveth/defio
+- **Automated Deployment**: Vercel integration with production pipeline
+- **Live Application**: https://defio-hvkf7kkik-volodeveths-projects.vercel.app
+
+---
+
 ## 🎉 Project Status: **LIVE & DEPLOYED**
 
-**✅ Production Ready** - Defio MVP is successfully deployed and accessible at https://defio.vercel.app
+**✅ Production Ready** - Defio v1 is successfully deployed with real Web3 functionality
 
-**🚀 Ready for users** - Full-featured DeFi aggregator with modern UI/UX, Farcaster integration, and Web3 functionality
+**🚀 Ready for users** - Full-featured DeFi aggregator with professional swap execution, multi-wallet support, and social integrations
 
 **📱 Farcaster Frame** - Interactive mini-app available for social media integration
+
+**💰 Revenue Generating** - Live platform fees on swap transactions via Universal Router
 
 *Non-custodial DeFi aggregator. Users maintain full control of their assets. Please read Risk Disclaimer before use.*
