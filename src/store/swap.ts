@@ -1,40 +1,36 @@
 import { create } from 'zustand';
-import { Token, SwapQuote, SwapSettings } from '@/types';
+import { Token } from '@/lib/swap-utils';
+import { FEE_CONFIG } from '@/constants/addresses';
+
+export interface SwapSettings {
+  slippageBps: number;
+  deadlineMinutes: number;
+  usePermit2: boolean;
+  expertMode: boolean;
+}
 
 interface SwapStore {
   // Tokens
   tokenIn: Token | null;
   tokenOut: Token | null;
   amountIn: string;
-  amountOut: string;
-  
-  // Quote
-  quote: SwapQuote | null;
-  isQuoting: boolean;
-  quoteError: string | null;
   
   // Settings
-  settings: SwapSettings;
-  
-  // UI State
-  isSwapping: boolean;
-  swapError: string | null;
+  slippageBps: number;
+  deadlineMinutes: number;
+  usePermit2: boolean;
+  expertMode: boolean;
   
   // Actions
   setTokenIn: (token: Token | null) => void;
   setTokenOut: (token: Token | null) => void;
   setAmountIn: (amount: string) => void;
-  setAmountOut: (amount: string) => void;
   swapTokens: () => void;
   
-  setQuote: (quote: SwapQuote | null) => void;
-  setIsQuoting: (isQuoting: boolean) => void;
-  setQuoteError: (error: string | null) => void;
-  
-  setSettings: (settings: Partial<SwapSettings>) => void;
-  
-  setIsSwapping: (isSwapping: boolean) => void;
-  setSwapError: (error: string | null) => void;
+  setSlippageBps: (slippage: number) => void;
+  setDeadlineMinutes: (deadline: number) => void;
+  setUsePermit2: (use: boolean) => void;
+  setExpertMode: (expert: boolean) => void;
   
   reset: () => void;
 }
@@ -44,20 +40,12 @@ export const useSwapStore = create<SwapStore>((set, get) => ({
   tokenIn: null,
   tokenOut: null,
   amountIn: '',
-  amountOut: '',
   
-  quote: null,
-  isQuoting: false,
-  quoteError: null,
-  
-  settings: {
-    slippageTolerance: 0.5,
-    deadline: 20,
-    expertMode: false,
-  },
-  
-  isSwapping: false,
-  swapError: null,
+  // Settings with defaults
+  slippageBps: FEE_CONFIG.DEFAULT_SLIPPAGE_BPS,
+  deadlineMinutes: FEE_CONFIG.DEFAULT_DEADLINE_MINUTES,
+  usePermit2: true,
+  expertMode: false,
   
   // Actions
   setTokenIn: (token) => {
@@ -72,7 +60,7 @@ export const useSwapStore = create<SwapStore>((set, get) => ({
   
   setTokenOut: (token) => {
     const { tokenIn } = get();
-    // If the new tokenOut is the same as tokenIn, swap them
+    // If the new tokenOut is the same as tokenIn, swap them  
     if (token && tokenIn && token.address === tokenIn.address) {
       set({ tokenOut: token, tokenIn: null });
     } else {
@@ -81,40 +69,27 @@ export const useSwapStore = create<SwapStore>((set, get) => ({
   },
   
   setAmountIn: (amount) => set({ amountIn: amount }),
-  setAmountOut: (amount) => set({ amountOut: amount }),
   
   swapTokens: () => {
-    const { tokenIn, tokenOut, amountIn, amountOut } = get();
+    const { tokenIn, tokenOut } = get();
     set({
       tokenIn: tokenOut,
       tokenOut: tokenIn,
-      amountIn: amountOut,
-      amountOut: amountIn,
-      quote: null,
     });
   },
   
-  setQuote: (quote) => set({ quote }),
-  setIsQuoting: (isQuoting) => set({ isQuoting }),
-  setQuoteError: (error) => set({ quoteError: error }),
-  
-  setSettings: (newSettings) => 
-    set((state) => ({ 
-      settings: { ...state.settings, ...newSettings } 
-    })),
-  
-  setIsSwapping: (isSwapping) => set({ isSwapping }),
-  setSwapError: (error) => set({ swapError: error }),
+  setSlippageBps: (slippageBps) => set({ slippageBps }),
+  setDeadlineMinutes: (deadlineMinutes) => set({ deadlineMinutes }),
+  setUsePermit2: (usePermit2) => set({ usePermit2 }),
+  setExpertMode: (expertMode) => set({ expertMode }),
   
   reset: () => set({
     tokenIn: null,
     tokenOut: null,
     amountIn: '',
-    amountOut: '',
-    quote: null,
-    isQuoting: false,
-    quoteError: null,
-    isSwapping: false,
-    swapError: null,
+    slippageBps: FEE_CONFIG.DEFAULT_SLIPPAGE_BPS,
+    deadlineMinutes: FEE_CONFIG.DEFAULT_DEADLINE_MINUTES,
+    usePermit2: true,
+    expertMode: false,
   }),
 }));

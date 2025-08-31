@@ -2,9 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowUpDown, Settings, Info } from 'lucide-react';
+import { ArrowUpDown, Settings, Info, AlertTriangle } from 'lucide-react';
+import { useAccount } from 'wagmi';
 import { useSwapStore } from '@/store/swap';
 import { formatNumber, formatCurrency } from '@/lib/utils';
+import { useBestQuote, QuoteParams } from '@/hooks/useQuotes';
+import { useSwap } from '@/hooks/useSwap';
+import { BASE_TOKENS, formatTokenAmount, getExchangeRate } from '@/lib/swap-utils';
+import { FEE_CONFIG } from '@/constants/addresses';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -14,62 +19,83 @@ import SlippageSettings from './SlippageSettings';
 import { cn } from '@/lib/utils';
 
 const SwapCard: React.FC = () => {
+  const { address } = useAccount();
   const {
     tokenIn,
     tokenOut,
     amountIn,
-    amountOut,
-    quote,
-    isQuoting,
-    quoteError,
-    isSwapping,
-    swapError,
+    slippageBps = FEE_CONFIG.DEFAULT_SLIPPAGE_BPS,
     setTokenIn,
     setTokenOut,
     setAmountIn,
-    setAmountOut,
     swapTokens,
-    setQuote,
-    setIsQuoting,
   } = useSwapStore();
 
   const [showSettings, setShowSettings] = useState(false);
 
-  // Mock quote fetching
-  useEffect(() => {
-    if (tokenIn && tokenOut && amountIn && parseFloat(amountIn) > 0) {
-      setIsQuoting(true);
-      
-      // Simulate API call
-      const timer = setTimeout(() => {
-        const mockQuote = {
-          tokenIn,
-          tokenOut,
+  // Build quote params
+  const quoteParams: QuoteParams | null = 
+    tokenIn && tokenOut && amountIn && parseFloat(amountIn) > 0 
+      ? {
+          tokenIn: tokenIn.address,
+          tokenOut: tokenOut.address,
           amountIn,
-          amountOut: (parseFloat(amountIn) * 0.082900).toFixed(6),
-          minAmountOut: (parseFloat(amountIn) * 0.082900 * 0.995).toFixed(6),
-          priceImpact: 0.05,
-          route: 'Aerodrome',
-          gasEstimate: '0.0001',
-          gasUSD: 0.30,
-          fee: '0.20',
-          feeUSD: 0.20,
-        };
-        
-        setQuote(mockQuote);
-        setAmountOut(mockQuote.amountOut);
-        setIsQuoting(false);
-      }, 1000);
+          decimalsIn: tokenIn.decimals,
+          decimalsOut: tokenOut.decimals,
+        }
+      : null;
 
-      return () => clearTimeout(timer);
-    } else {
-      setQuote(null);
-      setAmountOut('');
+  // Get quotes from multiple DEXes
+  const { quote, loading: isQuoting, error: quoteError, allQuotes } = useBestQuote(quoteParams);
+  
+  // Swap execution
+  const {
+    executeSwap,
+    estimateSwapGas,
+    simulateSwap,
+    isSwapReady,
+    isLoading: isSwapping,
+    isApproving,
+    error: swapError,
+    result: swapResult,
+  } = useSwap();
+
+  // Handle swap execution
+  const handleSwap = async () => {
+    if (!quote || !tokenIn || !tokenOut || !address) return;
+
+    try {
+      const result = await executeSwap({
+        tokenIn: tokenIn.address,
+        tokenOut: tokenOut.address,
+        amountIn,
+        quote,
+        slippageBps,
+        usePermit2: true, // Use Permit2 for better UX
+      });
+
+      if (result.hash) {
+        // Swap successful - could show success modal or redirect
+        console.log('Swap successful:', result);
+      }
+    } catch (error) {
+      console.error('Swap failed:', error);
     }
-  }, [tokenIn, tokenOut, amountIn, setQuote, setAmountOut, setIsQuoting]);
+  };
 
-  const canSwap = tokenIn && tokenOut && amountIn && parseFloat(amountIn) > 0 && !isQuoting;
-  const priceDisplay = quote ? `1 ${tokenIn?.symbol} = ${formatNumber(3000)} ${tokenOut?.symbol}` : '';
+  // Check if swap is ready
+  const { ready: canSwap, issues } = isSwapReady({
+    tokenIn: tokenIn?.address || '',
+    tokenOut: tokenOut?.address || '',
+    amountIn,
+    quote: quote!,
+    slippageBps,
+  });
+
+  // Calculate display values
+  const exchangeRate = quote ? getExchangeRate(amountIn, quote.amountOutFormatted, tokenIn?.decimals, tokenOut?.decimals) : '0';
+  const priceDisplay = quote ? `1 ${tokenIn?.symbol} = ${exchangeRate} ${tokenOut?.symbol}` : '';
+  const platformFeeUSD = parseFloat(amountIn) * 0.001 * (FEE_CONFIG.PLATFORM_FEE_BPS / 10000); // Rough calculation
 
   return (
     <div className="space-y-6">
@@ -121,7 +147,7 @@ const SwapCard: React.FC = () => {
               <TokenSelector
                 selectedToken={tokenIn}
                 onTokenSelect={setTokenIn}
-                tokens={[]}
+                tokens={BASE_TOKENS}
               />
             </div>
             <div className="w-32">
@@ -168,15 +194,14 @@ const SwapCard: React.FC = () => {
               <TokenSelector
                 selectedToken={tokenOut}
                 onTokenSelect={setTokenOut}
-                tokens={[]}
+                tokens={BASE_TOKENS}
               />
             </div>
             <div className="w-32">
               <Input
                 type="number"
                 placeholder="0.00"
-                value={amountOut}
-                onChange={(e) => setAmountOut(e.target.value)}
+                value={quote?.amountOutFormatted || ''}
                 className="text-right text-lg font-semibold"
                 isLoading={isQuoting}
                 disabled
@@ -198,37 +223,77 @@ const SwapCard: React.FC = () => {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-text-tertiary">Route</span>
-              <span className="text-sm text-text-primary">{quote.route}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-text-primary capitalize">{quote.route}</span>
+                {quote.route === 'uniswap' && quote.fee && (
+                  <Badge variant="outline" size="sm">{quote.fee / 10000}%</Badge>
+                )}
+              </div>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-text-tertiary">Platform fee</span>
-              <span className="text-sm text-text-primary">${quote.feeUSD}</span>
+              <span className="text-sm text-text-primary">
+                {FEE_CONFIG.PLATFORM_FEE_BPS / 100}% (~${platformFeeUSD.toFixed(2)})
+              </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-text-tertiary">Min. received</span>
               <span className="text-sm text-text-primary">
-                {quote.minAmountOut} {tokenOut?.symbol}
+                {formatTokenAmount(quote.amountOut, tokenOut?.decimals)} {tokenOut?.symbol}
               </span>
             </div>
+            {quote.priceImpact && quote.priceImpact > 1 && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-text-tertiary">Price Impact</span>
+                <span className={cn(
+                  "text-sm",
+                  quote.priceImpact > 5 ? "text-red-400" : "text-warning"
+                )}>
+                  {quote.priceImpact.toFixed(2)}%
+                </span>
+              </div>
+            )}
           </motion.div>
         )}
 
         {/* Swap Button */}
-        <Button
-          variant="primary"
-          size="lg"
-          className="w-full mt-6"
-          disabled={!canSwap}
-          isLoading={isSwapping}
-        >
-          {!tokenIn || !tokenOut
-            ? 'Select tokens'
-            : !amountIn || parseFloat(amountIn) === 0
-            ? 'Enter amount'
-            : isQuoting
-            ? 'Getting quote...'
-            : 'Swap'}
-        </Button>
+        <div className="mt-6 space-y-3">
+          {!address ? (
+            <Button variant="primary" size="lg" className="w-full">
+              Connect Wallet
+            </Button>
+          ) : (
+            <Button
+              variant="primary"
+              size="lg"
+              className="w-full"
+              disabled={!canSwap || isQuoting}
+              isLoading={isSwapping || isApproving}
+              onClick={handleSwap}
+            >
+              {isApproving
+                ? 'Approving...'
+                : isSwapping
+                ? 'Swapping...'
+                : !tokenIn || !tokenOut
+                ? 'Select tokens'
+                : !amountIn || parseFloat(amountIn) === 0
+                ? 'Enter amount'
+                : isQuoting
+                ? 'Getting quote...'
+                : issues.length > 0
+                ? issues[0]
+                : 'Swap'}
+            </Button>
+          )}
+          
+          {/* Route comparison */}
+          {allQuotes.uniswap && allQuotes.aerodrome && (
+            <div className="text-xs text-text-tertiary text-center">
+              Comparing {Object.values(allQuotes).filter(Boolean).length} routes
+            </div>
+          )}
+        </div>
 
         {/* Error Display */}
         {(quoteError || swapError) && (
