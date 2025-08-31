@@ -1,0 +1,14 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#41E3FF"/>
+      <stop offset="100%" stop-color="#9B87F5"/>
+    </linearGradient>
+  </defs>
+  <!-- background -->
+  <rect x="0" y="0" width="256" height="256" rx="40" fill="#0A0B0D"/>
+  <!-- D-shape (chain/flow motif) -->
+  <path fill="url(#g)" d="M88 64h44c45 0 76 29 76 64s-31 64-76 64H88c-8 0-16-8-16-16V80c0-8 8-16 16-16zm44 24h-28v80h28c31 0 52-20 52-40s-21-40-52-40z"/>
+  <!-- tap dot -->
+  <circle cx="178" cy="84" r="10" fill="#41E3FF"/>
+</svg>

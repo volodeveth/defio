@@ -1,0 +1,748 @@
+Фрейм‑DeFi агрегатор (Social DeFi Trader)
+
+Потреба: у користувачів Base високий попит на DeFi, але інтерфейси Aave, Aerodrome, Seamless тощо розрізнені; потрібен простий доступ із соціальної стрічки.
+Пропозиція: побудувати міні‑додаток, який дозволяє виконувати базові DeFi‑операції (депозит, позика, стейкінг) просто в постах Farcaster/Base App.
+
+Функціонал:
+
+один dashboard, де можна підключити смарт‑гаманець Base App (або згенерувати абстрактний акаунт);
+
+інтеграція із найбільшими протоколами Base (Aave – позики, Aerodrome/Uniswap – свопи, Morpho – оптимізовані позики);
+
+відображення поточних ставок, TVL та APR;
+
+автопідбір найкращих ферм (yield aggregator) і можливість оформити транзакцію в один клік;
+
+аналітика портфеля та push‑нагадування про ліквідаційні ризики;
+
+можливість ділитися своїми угодами в стрічці (social trading).
+
+Це створить зручний “Robinhood для Web3” та скоротить фрагментацію DeFi.
+
+давай детальніше про такий додаток, як його реалізувати та як я як творець буду отримувати прибуток
+ChatGPT said:
+Thought for 1m 25s
+
+Класна ідея. Нижче — детальний, практичний план реалізації Social DeFi Trader як Farcaster mini-app + інтеграція в Base App. Я зосереджуюся на технологіях (Next.js/React/Tailwind/Node.js), безпеці, UX-флоу, монетизації та метриках.
+
+1) Архітектура (високий рівень)
+
+Фронтенд (mini-app + веб):
+
+Next.js 14 (App Router), React, Tailwind.
+
+Wallet & Base: Coinbase Smart Wallet SDK (AA/4337), wagmi + viem для Base.
+
+Farcaster Mini Apps SDK (кнопки дій, попередній перегляд, deeplink у mini-app просто зі стрічки).
+
+UI-модулі: Swap, Deposit, Borrow, Yield, Portfolio, Alerts, Share.
+
+Бекенд (оркестрація):
+
+Node.js (NestJS/Express) + PostgreSQL/Redis.
+
+Services:
+
+rates-indexer (агрегує APR/TVL/обсяги з Aave/Aerodrome/Uniswap/Morpho).
+
+pathfinder (маршрути для свопів, котирування, проскальзування).
+
+risk-daemon (моніторинг health factor, тригери ліквідаційних алертів).
+
+notifier (XMTP/веб-пуші/Email/TG — залежно що Вам зручніше).
+
+Симуляції транзакцій: Tenderly/Blocknative (pre-tx simulation).
+
+Черги: BullMQ/Redis для алертів/симуляцій.
+
+Смарт-контракти (обережно мінімальні):
+
+Router (мультикал з адаптерами до Aave/Aerodrome/Uniswap/Morpho).
+
+Adapters Registry (вайтліст протоколів і дозволених методів).
+
+(Опційно) Vaults для власних стратегій (щоб брати performance-fee прозоро).
+
+(Опційно) Paymaster для gas-sponsor перших N транзакцій (AA/4337).
+
+Принцип: усе некостодіально, без утримання коштів користувача; тільки безпечні виклики whitelisted-протоколів.
+
+2) Інтеграції протоколів (Base)
+
+Aave v3: депозит/зняття, позика/погашення; читання health factor; обмеження LTV/SL.
+
+Aerodrome/Uniswap v3: свопи з маршрутизацією, обмеженням проскальзування; преференція пулів із кращою ліквідністю.
+
+Morpho (blue/optimised lending): supply/borrow для підвищення ефективності.
+
+Джерела даних: офіційні субграфи/The Graph або ваш власний індексатор (фоли на Base), з фолбеком до прямих on-chain читань через viem.
+
+3) UX-флоу mini-app (коротко)
+
+Connect / Create: під’єднання Coinbase Smart Wallet або створення абстрактного акаунта (AA) у 1 клік.
+
+Swap: вибір токенів → котирування (декілька маршрутів) → симуляція → підтвердження в mini-app.
+
+Deposit/Borrow (Aave/Morpho): вибір активу → розрахунок лімітів → підказки з ризику → підписання.
+
+Yield: ранжування пулів/стратегій за чистим APR (після комісій), обсягом, ризиком.
+
+Портфель: позиції, PnL, health factor, попередження.
+
+Алерти/нотифікації: health factor < 1.2, різка зміна APR/ціни, дюжина ризикових подій.
+
+Share/Cop y-trade: кнопка “Поділитися угодою” у касті Farcaster → реципієнт відкриває mini-app з попередньо заповненими параметрами (“Виконати таку ж угоду”).
+
+4) Безпека і відповідність
+
+Whitelisting протоколів і методів (тільки перевірені контракти на Base).
+
+Симуляції кожної транзакції до відправки, чіткий ліміт проскальзування.
+
+Disclosure комісій (перед підписанням): ваша fee, протокольні фі, очікуваний мін-аут.
+
+Ліміт-свічи для великих свопів, анти-MEV (провайдери приватних мемпулів).
+
+Паніка-кнопка/kill-switch у Router (тільки для відключення небезпечного адаптера; без доступу до коштів).
+
+Аудит Router/Adapters/Vaults (спочатку “lite” з формальною верифікацією ключових функцій).
+
+Комплаєнс: non-custodial; попередження щодо ризиків; опційний гео-фільтр юрисдикцій з обмеженнями.
+
+5) Монетизація для Вас (прозора та диверсифікована)
+
+Routing-fee на свопи
+
+0,05–0,15% від обсягу; показувати в котируванні як “Aggregator fee”.
+
+Напр.: $1 000 своп → 0,1% = $1; при 1000 свопів/день ~ $1 000/день.
+
+Performance-fee у власних vaults
+
+5–10% від прибутку (не від обсягу) на оптимізованих стратегіях (авто-компаунд, перелівередж, delta-neutral).
+
+Приклади: чистий 12% річних; на $1 млн TVL → $120k/рік → 10% performance-fee = $12k/рік.
+
+Підписка Pro
+
+$10/міс. у USDC за розширені фічі: глибші маршрути, авт ребаланс, детальні алерти, звіти.
+
+2 000 Pro-користувачів → ~$20 000/міс.
+
+Соціальний трейдинг (rev-share)
+
+Автор стратегії отримує, наприклад, 10% від платформи з кожної copy-trade-fee; Ви — 10% як платформа.
+
+Стимул авторам ділитися якісними сетапами, а Вам — масштабувати контент.
+
+Sponsored/Featured стратегії/пули
+
+Протоколи платять фікс за промо в каталозі mini-apps (мітка “Sponsored”, без прихованих просувань).
+
+B2B-модуль / White-label
+
+Ліцензування вашого агрегатора маркет-мейкерам/ком’юніті-менеджерам (брендований UI, ваша роутинг-інфраструктура під їхній домен).
+
+Партнерські програми протоколів (де доступно)
+
+Треки за рефералів/TVL, гранти екосистеми Base, програми інсентивів.
+
+Всі комісії відображайте прозоро до підписання. Це знімає питання довіри й знижує відтік.
+
+6) Деталі реалізації (практично)
+
+Пакети:
+
+next, react, tailwindcss, wagmi, viem, @coinbase/wallet-sdk (Smart Wallet), zod (валідація), jotai або zustand.
+
+Backend: nestjs/express, pg, prisma, bullmq, ethers (для воркерів), node-cron.
+
+Mini-app: офіційний Farcaster Mini Apps SDK (кнопки дій, метадані, зображення-прев’ю).
+
+Підсистема котирування:
+
+On-chain читання пулів (tick, sqrtPriceX96, ліквідність), калькулятор для v3 свопів (аналог Uniswap quoter).
+
+Маршрутизація: простий Dijkstra по пулах з вагами (ліквідність/фі), або інтеграція з зовнішнім pathfinder’ом (якщо доступний на Base).
+
+Для Aave/Morpho — прямі ABI-виклики (supply/withdraw/borrow/repay), перевірка HF до/після.
+
+Yield агрегатор:
+
+Розрахунок чистого APR = брутто-APR − (протокольні fee) − (ваша routing/performance-fee, якщо застосовується).
+
+Рейтинг = f(APR, TVL, віковість пулу, волатильність, ризик-скор).
+
+Кнопка “Invest” у mini-app → абаут-екран з ризиками → симуляція → підписання.
+
+Ризик і алерти:
+
+Health factor watcher (Aave/Morpho): дає алерт при падінні < 1.2 → < 1.1 → критично.
+
+Стрімінг цін (dex TWAP/оркл): алерт при зсуві > X%.
+
+Канали алертів: XMTP (до Base App чату), електронна пошта, Telegram-бот (на вибір).
+
+Соціальний шеринг/копітрейдинг:
+
+Після угоди — share → формується “рецепт” (масив кроків Router) + параметри (мін-аут, дедлайн).
+
+Каст у Farcaster із кнопкою “Repeat trade” → відкриває mini-app з предзаповненими даними.
+
+Для стратегій — коротка сторінка документації + історія PnL (off-chain з верифікацією он-чейн подій).
+
+Gas-досвід:
+
+4337 Paymaster для перших N транзакцій/мікро-свопів → зменшує фрикцію та підвищує конверсію.
+
+Далі — перемикач “Я плачу gas” або “Спонсоровано” (якщо є бюджет).
+
+Аналітика/приватність:
+
+On-chain first: усе важливе — в логах смарт-контрактів.
+
+Off-chain: PostHog/Amplitude з анонімізацією (без адрес/особистих даних), лише події UI.
+
+7) Роадмап запуску
+
+MVP (2–4 тижні):
+
+Swap (Aerodrome/Uniswap), базовий Dashboard, підключення Smart Wallet, mini-app для 1-2 сценаріїв (Swap + Share).
+
+Базові котирування та симуляція, прозоре відображення fee.
+
+v1 (4–8 тижнів):
+
+Aave/Morpho: депозит/позики, health-алерти (XMTP), портфель, базовий yield-ранжир.
+
+Paymaster (обмежений бюджет), простий pathfinder, перші Pro-фічі.
+
+v2 (8–12 тижнів):
+
+Vaults/стратегії з performance-fee, повний копітрейдинг, розширені алерти, white-label.
+
+Sponsored слоти, партнерства з протоколами, програми для авторів стратегій.
+
+8) Метрики успіху
+
+Activation: % користувачок, що провели ≥1 транзакцію в mini-app.
+
+Retention (D7/D30): відсоток повернень; частота алерт-тригерів → конверсія в дію.
+
+TVL & Volume: сумарні депозити, обсяг свопів; take rate (ваш дохід/обсяг).
+
+Sharing→Copy-trade CTR: частка переходів з кастів у виконані угоди.
+
+Pro ARPU/Churn: середній місячний дохід на Pro-користувача і відтік.
+
+9) Юридичні нотатки (практично)
+
+Наголошуйте, що сервіс некостодіальний; Ви не даєте інвестконсультацій.
+
+Чіткий Risk Disclaimer (ліквідації, проскальзування, волатильність, смарт-контрактні ризики).
+
+За потреби — гео-фільтр для країн із обмеженнями, механізм скарг/видалення “шкідливих” стратегій.
+
+10) Ваш прибуток — приклад розрахунку
+
+Припустимо за місяць:
+
+Свопи: $20 млн обсягу з середньою fee 0,08% → $16 000.
+
+Vaults (TVL $2 млн, 12% річних, нетто-прибуток/міс ≈ $20 000): 10% performance-fee = $2 000.
+
+Pro 1 500 користувачок × $10 = $15 000.
+
+Sponsored: 4 розміщення × $1 000 = $4 000.
+
+Разом ≈ $37 000/міс (брудними) з потенціалом росту за рахунок обсягу, TVL і Pro.
+
+11) Що Вам зробити першою
+
+Затвердити fee-політику (діапазони, прозоре відображення).
+
+Обрати стек: Next.js + wagmi/viem + Smart Wallet SDK; NestJS + Postgres + Redis.
+
+Почати з Swap-MVP mini-app (одна кнопка в касті + котирування + симуляція + підписання).
+
+Далі підключити Aave/Morpho + health-алерти через XMTP.
+
+Після валідації — Paymaster і перші Pro-фічі.
+
+Якщо хочете, під цю ж ідею можу накидати стартовий репозиторій (структура директорій, базові хуки wagmi/viem, мінімальний Router-інтерфейс і mini-app ендпоінти) та шаблон Risk Disclaimer/Terms.
+
+Якщо хочете, під цю ж ідею можу накидати стартовий репозиторій (структура директорій, базові хуки wagmi/viem, мінімальний Router-інтерфейс і mini-app ендпоінти) та шаблон Risk Disclaimer/Terms.
+
+так, давай
+ChatGPT said:
+Thought for 1m 34s
+
+чудово — ось стартовий репозиторій під Social DeFi Trader (Next.js 14 / React / Tailwind / Node API в Route Handlers, wagmi/viem), мінімальний Router у Solidity та Farcaster mini-app endpoint. Наприкінці додала шаблон Risk Disclaimer / Terms (UA).
+
+📦 Структура проєкту
+social-defi-trader/
+├─ apps/
+│  └─ web/
+│     ├─ app/
+│     │  ├─ page.tsx
+│     │  ├─ layout.tsx
+│     │  ├─ miniapp/route.ts                 # Farcaster mini-app (in-feed) endpoint (HTML+meta)
+│     │  └─ api/
+│     │     └─ miniapp/
+│     │        ├─ quote/route.ts             # GET котирування (swap/borrow/deposit) - демо
+│     │        └─ tx/route.ts                # POST формування tx (to, data, value)
+│     ├─ components/
+│     │  ├─ WalletProvider.tsx
+│     │  ├─ SwapCard.tsx
+│     │  └─ PortfolioCard.tsx
+│     ├─ lib/
+│     │  ├─ wagmi.ts
+│     │  ├─ chains.ts
+│     │  └─ protocols/
+│     │     ├─ aave.ts
+│     │     ├─ aerodrome.ts
+│     │     └─ morpho.ts
+│     ├─ styles/globals.css
+│     ├─ next.config.js
+│     ├─ tailwind.config.ts
+│     ├─ tsconfig.json
+│     ├─ package.json
+│     └─ .env.example
+├─ contracts/
+│  ├─ IRouter.sol
+│  ├─ Router.sol
+│  └─ adapters/
+│     ├─ IAaveAdapter.sol
+│     └─ AaveAdapter.sol
+├─ README.md
+├─ .eslintrc.json
+└─ .prettierrc
+
+apps/web/package.json
+{
+  "name": "social-defi-trader-web",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "14.2.5",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "tailwindcss": "3.4.10",
+    "autoprefixer": "10.4.19",
+    "postcss": "8.4.41",
+    "viem": "2.14.1",
+    "wagmi": "2.12.10",
+    "@wagmi/core": "2.13.7",
+    "@tanstack/react-query": "5.51.1",
+    "@coinbase/wallet-sdk": "4.2.1",
+    "zod": "3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "5.5.4",
+    "eslint": "8.57.0",
+    "eslint-config-next": "14.2.5"
+  }
+}
+
+apps/web/.env.example
+NEXT_PUBLIC_RPC_URL=https://mainnet.base.org
+NEXT_PUBLIC_CHAIN_ID=8453
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Якщо будете викликати ваш Router-контракт:
+NEXT_PUBLIC_ROUTER_ADDRESS=0xYourRouterOnBase
+
+# (опційно) для симуляцій, аналітики тощо:
+TENDERLY_SIM_API_KEY=
+
+apps/web/next.config.js
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  experimental: { optimizePackageImports: ["viem", "wagmi"] }
+};
+module.exports = nextConfig;
+
+apps/web/tailwind.config.ts
+import type { Config } from "tailwindcss";
+
+export default {
+  content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
+  theme: { extend: {} },
+  plugins: []
+} satisfies Config;
+
+apps/web/styles/globals.css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: dark; }
+body { @apply bg-neutral-950 text-neutral-100; }
+.card { @apply rounded-2xl p-4 border border-neutral-800 shadow; }
+.btn { @apply inline-flex items-center justify-center px-4 py-2 rounded-xl border border-neutral-700 hover:bg-neutral-800 transition; }
+.input { @apply w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2; }
+
+apps/web/app/layout.tsx
+export const metadata = {
+  title: "Social DeFi Trader",
+  description: "Mini-app DeFi агрегатор для Base/Farcaster"
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="uk">
+      <body>{children}</body>
+    </html>
+  );
+}
+
+apps/web/app/page.tsx
+"use client";
+
+import { WagmiConfig } from "wagmi";
+import { config } from "@/lib/wagmi";
+import SwapCard from "@/components/SwapCard";
+import PortfolioCard from "@/components/PortfolioCard";
+
+export default function Page() {
+  return (
+    <WagmiConfig config={config}>
+      <main className="mx-auto max-w-3xl p-6 space-y-6">
+        <header className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold">Social DeFi Trader</h1>
+          <a className="btn" href="/miniapp" target="_blank" rel="noreferrer">Open Mini-App</a>
+        </header>
+        <SwapCard />
+        <PortfolioCard />
+        <footer className="text-xs text-neutral-400">
+          Некостодіальний додаток. Будь ласка, ознайомтесь із Risk Disclaimer.
+        </footer>
+      </main>
+    </WagmiConfig>
+  );
+}
+
+apps/web/components/WalletProvider.tsx
+
+(за потреби — окремий провайдер; у прикладі WagmiConfig вже на сторінці)
+
+apps/web/lib/chains.ts
+import { base } from "viem/chains";
+export const CHAIN = base; // Base Mainnet (8453)
+
+apps/web/lib/wagmi.ts
+import { http, createConfig } from "wagmi";
+import { base } from "viem/chains";
+import { coinbaseWallet } from "@wagmi/connectors/coinbaseWallet";
+import { injected } from "@wagmi/connectors";
+
+const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL!;
+export const config = createConfig({
+  chains: [base],
+  transports: { [base.id]: http(rpcUrl) },
+  connectors: [
+    coinbaseWallet({ appName: "Social DeFi Trader" }),
+    injected({ shimDisconnect: true })
+  ]
+});
+
+apps/web/components/SwapCard.tsx
+"use client";
+
+import { useState } from "react";
+import { useAccount, useSendTransaction } from "wagmi";
+import { parseEther, encodeFunctionData, Address } from "viem";
+
+export default function SwapCard() {
+  const { address, isConnected } = useAccount();
+  const { sendTransactionAsync } = useSendTransaction();
+
+  const [from, setFrom] = useState("USDC");
+  const [to, setTo] = useState("ETH");
+  const [amount, setAmount] = useState("10");
+  const [quote, setQuote] = useState<{ minOut?: string; route?: string } | null>(null);
+
+  async function getQuote() {
+    const url = new URL("/api/miniapp/quote", window.location.origin);
+    url.searchParams.set("from", from);
+    url.searchParams.set("to", to);
+    url.searchParams.set("amount", amount);
+    const res = await fetch(url.toString());
+    const data = await res.json();
+    setQuote(data);
+  }
+
+  async function submitTx() {
+    const res = await fetch("/api/miniapp/tx", {
+      method: "POST",
+      body: JSON.stringify({ from, to, amount, slippageBps: 50 }),
+      headers: { "content-type": "application/json" }
+    });
+    const { to: toAddr, data, value } = await res.json();
+    await sendTransactionAsync({ to: toAddr as Address, data, value });
+  }
+
+  return (
+    <section className="card space-y-3">
+      <h2 className="text-lg font-medium">Swap</h2>
+      <div className="grid grid-cols-2 gap-3">
+        <input className="input" value={from} onChange={e => setFrom(e.target.value)} placeholder="Від (напр. USDC)" />
+        <input className="input" value={to} onChange={e => setTo(e.target.value)} placeholder="До (напр. ETH)" />
+        <input className="input col-span-2" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Кількість" />
+      </div>
+      <div className="flex gap-3">
+        <button className="btn" onClick={getQuote}>Котирування</button>
+        <button className="btn" disabled={!isConnected} onClick={submitTx}>
+          Виконати (demo)
+        </button>
+      </div>
+      {quote && (
+        <p className="text-sm text-neutral-400">
+          Маршрут: {quote.route ?? "demo"} • Мін. отримання: {quote.minOut ?? "—"}
+        </p>
+      )}
+      {!isConnected && <p className="text-xs text-amber-400">Підключіть гаманець (Coinbase або Injected) для відправки транзакцій.</p>}
+    </section>
+  );
+}
+
+apps/web/components/PortfolioCard.tsx
+export default function PortfolioCard() {
+  return (
+    <section className="card">
+      <h2 className="text-lg font-medium">Портфель</h2>
+      <p className="text-sm text-neutral-400">Демо-виджет. Тут будуть позиції (Aave/Morpho), HF, PnL, алерти.</p>
+    </section>
+  );
+}
+
+Farcaster mini-app: apps/web/app/miniapp/route.ts
+
+Повертаємо легку HTML-сторінку з мета-тегами (спрацьовує у стрічці як міні-додаток). Кнопка веде на post_url, який може бути вашим API.
+
+import { NextResponse } from "next/server";
+
+export async function GET() {
+  const host = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const postUrl = `${host}/api/miniapp/quote`;
+
+  const html = `
+<!doctype html>
+<html>
+  <head>
+    <meta property="og:title" content="Social DeFi Trader" />
+    <meta name="fc:frame" content="vNext" />
+    <meta name="fc:frame:image" content="${host}/api/og?title=DeFi%20Trader" />
+    <meta name="fc:frame:button:1" content="Котирування 10 USDC → ETH" />
+    <meta name="fc:frame:post_url" content="${postUrl}" />
+  </head>
+  <body style="background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh">
+    <div>Social DeFi Trader mini-app</div>
+  </body>
+</html>`;
+
+  return new NextResponse(html, { headers: { "content-type": "text/html" } });
+}
+
+
+За потреби зробимо окремі роутери для дій (swap/deposit/borrow) і кнопок 2–4.
+
+API: котирування (demo) — apps/web/app/api/miniapp/quote/route.ts
+import { NextRequest, NextResponse } from "next/server";
+
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const from = searchParams.get("from") ?? "USDC";
+  const to = searchParams.get("to") ?? "ETH";
+  const amount = searchParams.get("amount") ?? "10";
+
+  // TODO: реальна логіка котирування з Aerodrome/Uniswap Quoter або власним pathfinder
+  const mockMinOut = "0.0031"; // demo
+  const route = "Aerodrome: USDC->WETH";
+
+  return NextResponse.json({ from, to, amount, minOut: mockMinOut, route });
+}
+
+API: формування транзакції — apps/web/app/api/miniapp/tx/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { encodeFunctionData, parseEther } from "viem";
+import IRouter from "@/../contracts/out/IRouter.json"; // якщо згенеруєте ABI, або покладіть ABI в /apps/web/abi
+
+export async function POST(req: NextRequest) {
+  const { from, to, amount, slippageBps } = await req.json();
+
+  const router = process.env.NEXT_PUBLIC_ROUTER_ADDRESS as `0x${string}`;
+  // Приклад: виклик вашого Router.swapExactInput(address tokenIn, address tokenOut, uint256 amountIn, uint256 minOut, address to)
+  const data = encodeFunctionData({
+    abi: IRouter.abi,
+    functionName: "swapExactInput",
+    args: [
+      "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC addr на Base — ПРИКЛАД, замініть на актуальну
+      "0x4200000000000000000000000000000000000006", // WETH на Base — ПРИКЛАД
+      BigInt(Number(amount) * 1_000_000),          // USDC 6 decimals (демо)
+      BigInt(0),                                   // minOut (розрахувати по котируванню - slippage)
+      "0x0000000000000000000000000000000000000000" // отримувач (замінити на msg.sender, якщо AA)
+    ]
+  });
+
+  return NextResponse.json({
+    to: router,
+    data,
+    value: "0x0"
+  });
+}
+
+
+Увага: адреси токенів — заповнювачі. Підставте реальні адреси Base (USDC, WETH) і додайте контроль slippage/minOut.
+
+⚙️ Смарт-контракти (мінімум)
+contracts/IRouter.sol
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+interface IRouter {
+    function swapExactInput(
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        uint256 minOut,
+        address to
+    ) external payable returns (uint256 out);
+
+    function supplyAave(address asset, uint256 amount, address onBehalfOf) external;
+
+    function borrowAave(address asset, uint256 amount, uint256 interestRateMode, address onBehalfOf) external;
+
+    // ... інші фасади (withdraw/repay), Morpho тощо
+}
+
+contracts/Router.sol (скелет)
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+import "./IRouter.sol";
+
+contract Router is IRouter {
+    address public owner;
+    mapping(address => bool) public adapters; // дозволені адаптери (DEX, Aave, Morpho)
+
+    modifier onlyOwner() { require(msg.sender == owner, "not owner"); _; }
+
+    constructor() { owner = msg.sender; }
+
+    function setAdapter(address adapter, bool allowed) external onlyOwner {
+        adapters[adapter] = allowed;
+    }
+
+    function swapExactInput(
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        uint256 minOut,
+        address to
+    ) external payable override returns (uint256 out) {
+        // TODO: делегування на дозволений DEX-адаптер (наприклад, AerodromeAdapter)
+        // Перевірити adapters[adapter] == true, потім викликати адаптер
+        // Контракт-скелет без реалізації (для аудиту й поступового розширення)
+        revert("Adapter not wired");
+    }
+
+    function supplyAave(address asset, uint256 amount, address onBehalfOf) external override {
+        revert("Adapter not wired");
+    }
+
+    function borrowAave(address asset, uint256 amount, uint256 interestRateMode, address onBehalfOf) external override {
+        revert("Adapter not wired");
+    }
+}
+
+contracts/adapters/IAaveAdapter.sol
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+interface IAaveAdapter {
+    function supply(address asset, uint256 amount, address onBehalfOf) external;
+    function borrow(address asset, uint256 amount, uint256 interestRateMode, address onBehalfOf) external;
+    // withdraw/repay...
+}
+
+
+Ідея: Router робить тільки whitelisted делегацію на адаптери. Це спрощує аудит та дає можливість швидко “відмикати” небезпечні інтеграції.
+
+🧪 README.md (витяг — як стартувати локально)
+## Quick Start
+
+1) cd apps/web && cp .env.example .env.local
+2) Вкажіть NEXT_PUBLIC_RPC_URL (Base mainnet або Base Sepolia), ROUTER_ADDRESS (якщо є).
+3) npm i && npm run dev
+4) Відкрийте http://localhost:3000 (web), mini-app предпрев’ю: http://localhost:3000/miniapp
+
+### Збірка
+npm run build && npm start
+
+### Нотатки
+- /app/api/miniapp/* — демо-ендпоінти для міні-додатку (Farcaster/Base App).
+- Підключення смарт-гаманця: Wagmi + Coinbase Wallet SDK.
+- Реальні інтеграції (Aave/Aerodrome/Morpho) додайте в /lib/protocols/*
+
+📄 Шаблон Risk Disclaimer & Terms (UA)
+
+Збережіть як RISK-DISCLAIMER.md та TERMS.md, додайте посилання у футер додатку.
+
+Risk Disclaimer — Останнє оновлення: 28 серпня 2025
+
+Високий ризик. Операції з криптоактивами (у т.ч. свопи, депозити, позики, стейкінг) несуть ризик повної втрати коштів. Вартість активів може суттєво коливатися.
+
+Некостодіальна модель. Сервіс не зберігає та не контролює ваші кошти. Усі транзакції виконуються вашим гаманцем безповоротно.
+
+Смарт-контрактні ризики. Будь-які протоколи (Aave, Aerodrome, Morpho та ін.) можуть містити вразливості або зазнати експлойтів.
+
+Ліквідації та кредитний ризик. Використовуйте позики обережно. Падіння health factor нижче порогу може призвести до ліквідації з втратою частини активів.
+
+Ринкові та технічні ризики. Проскальзування, недостатня ліквідність, збої мережі, MEV-атаки, відмова інфраструктури третіх сторін — усе це може вплинути на результат.
+
+Відсутність гарантій. Сервіс надається “як є”, без гарантій доступності, безпеки чи прибутковості.
+
+Ваша відповідальність. Ви самостійно оцінюєте ризики, юрисдикційні обмеження та податкові наслідки. Якщо ви не розумієте ризики — не використовуйте сервіс.
+
+Terms of Use — Останнє оновлення: 28 серпня 2025
+
+Некостодіальність і ліцензія. Ми надаємо інтерфейс для взаємодії з протоколами третьої сторони. Ви зберігаєте повний контроль над ключами; ми не є посередником переказів.
+
+Заборонене використання. Заборонені шахрайські дії, відмивання коштів, санкційні юрисдикції, експлуатація вразливостей. Ми можемо обмежувати доступ (наприклад, гео-фільтром).
+
+Комісії. Перед підписанням транзакції інтерфейс відображає всі релевантні комісії: протокольні, мережеві (gas), platform/routing-fee, performance-fee (для vaults).
+
+Відмова від відповідальності. Ми не несемо відповідальності за збитки, спричинені рішеннями користувача чи діями третіх сторін (протоколів, мереж, постачальників даних).
+
+Оновлення. Ми можемо змінювати умови/функціонал; продовження використання означає згоду з оновленими умовами.
+
+Зв’язок. Питання з комплаєнсу, безпеки та правових аспектів: [your-email@example.com
+].
+
+💰 Монетизація (як увімкнути в коді)
+
+Routing-fee на свопи: додайте параметр feeBps у tx/route.ts і прокладіть збір через ваш Router (напр., відсоток виводиться у ваш fee-receiver).
+
+Performance-fee у vaults: реалізується на рівні смарт-контрактів стратегій (нарахування при harvest).
+
+Pro-підписка: захищайте Pro-ендпоінти токен-гейтом (NFT-або підписка у USDC) + UI-блокування фіч.
+
+Sponsored: додайте прапорець “sponsored” до стратегій у каталозі та позначайте у UI.
+
+Далі можу:
+
+Додати реальні адреси токенів/протоколів на Base, шаблони адаптерів під Aerodrome/Uniswap v3 та Aave v3.
+
+Накинути Paymaster (AA/4337) для газ-спонсорства перших транзакцій.
+
+Підготувати огляд безпеки (чекліст) і скрипти симуляцій (Tenderly).
+
+Скажіть, будь ласка, який саме перший сценарій хочете оживити (swap USDC→WETH, депозит в Aave, чи borrow) — і я одразу розширю код під нього з реальними адресами на Base.
