@@ -8,7 +8,7 @@ Defio is a DeFi aggregator designed as a native experience for both Farcaster an
 
 ## Key Features ✅ **IMPLEMENTED**
 
-- **Multi-Wallet Support**: User-friendly wallet selection with Coinbase Smart Wallet, MetaMask, WalletConnect ✅
+- **Multi-Wallet Support**: User-friendly wallet selection with Coinbase Smart Wallet, MetaMask, WalletConnect ✅ **FIXED**
 - **Social Login Options**: Farcaster and Base App authentication integration ✅
 - **Real Swap Functionality**: Universal Router + Permit2 for gasless approvals ✅
 - **Multi-DEX Aggregation**: Uniswap v3 + Aerodrome quote comparison ✅
@@ -274,10 +274,10 @@ vercel --token $(cat "vercel token.txt") --prod
 
 ## 🌐 Live Application
 
-- **Production URL**: https://defio-hvkf7kkik-volodeveths-projects.vercel.app ✅ **ACTIVE**
+- **Production URL**: https://defio-ag6z0biip-volodeveths-projects.vercel.app ✅ **ACTIVE**
 - **GitHub Repository**: https://github.com/volodeveth/defio ✅ **COMMITTED**
-- **Farcaster Mini-app**: https://defio-hvkf7kkik-volodeveths-projects.vercel.app/miniapp
-- **OG Image API**: https://defio-hvkf7kkik-volodeveths-projects.vercel.app/api/og
+- **Farcaster Mini-app**: https://defio-ag6z0biip-volodeveths-projects.vercel.app/miniapp
+- **OG Image API**: https://defio-ag6z0biip-volodeveths-projects.vercel.app/api/og
 
 ## Links
 
@@ -295,7 +295,20 @@ MIT License - see LICENSE file for details
 
 ## 🔧 Recent Technical Implementations
 
-### ✅ **Wallet System Overhaul** (Latest Update)
+### ✅ **Wallet Connection System Fixes** (Latest Update - August 2025)
+- **Fixed Modal Positioning**: React Portal implementation for proper z-index layering
+- **Improved UI Visibility**: Better contrast, proper icons for Base/MetaMask, shadow effects
+- **Connection Logic Repair**: Fixed premature modal closing, proper error handling
+- **User Feedback**: Real-time error display and connection status indicators
+- **Environment Configuration**: Complete .env setup with WalletConnect integration
+
+**Issues Resolved:**
+- ❌ Modal appearing transparent with poor text visibility → ✅ Dark backdrop with proper contrast
+- ❌ Modal positioning behind header → ✅ React Portal with correct z-index
+- ❌ Wallet connections failing silently → ✅ Error messages and status feedback
+- ❌ Modal closing before connection confirmation → ✅ Only closes on successful connection
+
+### ✅ **Wallet System Overhaul**
 - **Multi-Wallet Modal**: Replaced forced Base account opening with user choice
 - **Farcaster Auth**: Frame context detection and social authentication
 - **Base App Integration**: Native smart wallet detection and connection
@@ -311,18 +324,20 @@ MIT License - see LICENSE file for details
 ### ✅ **Production Infrastructure**
 - **GitHub Repository**: https://github.com/volodeveth/defio
 - **Automated Deployment**: Vercel integration with production pipeline
-- **Live Application**: https://defio-hvkf7kkik-volodeveths-projects.vercel.app
+- **Live Application**: https://defio-ag6z0biip-volodeveths-projects.vercel.app
 
 ---
 
 ## 🎉 Project Status: **LIVE & DEPLOYED**
 
-**✅ Production Ready** - Defio v1 is successfully deployed with real Web3 functionality
+**✅ Production Ready** - Defio v1 is successfully deployed with reliable wallet connections and real Web3 functionality
 
-**🚀 Ready for users** - Full-featured DeFi aggregator with professional swap execution, multi-wallet support, and social integrations
+**🚀 Ready for users** - Full-featured DeFi aggregator with professional swap execution, fixed multi-wallet support, and social integrations
 
 **📱 Farcaster Frame** - Interactive mini-app available for social media integration
 
 **💰 Revenue Generating** - Live platform fees on swap transactions via Universal Router
+
+**🔧 Recently Fixed** - Wallet connection issues resolved, improved UI/UX, better error handling
 
 *Non-custodial DeFi aggregator. Users maintain full control of their assets. Please read Risk Disclaimer before use.*
