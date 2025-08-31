@@ -59,7 +59,13 @@ const WalletConnectModal: React.FC<WalletConnectModalProps> = ({ isOpen, onClose
       id: 'base-app',
       name: 'Base App',
       description: 'Native Base ecosystem experience',
-      icon: <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm">B</div>,
+      icon: (
+        <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
+          <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+          </svg>
+        </div>
+      ),
       connector: coinbaseWallet({ 
         appName: 'Defio',
         preference: 'smartWalletOnly'
@@ -70,12 +76,18 @@ const WalletConnectModal: React.FC<WalletConnectModalProps> = ({ isOpen, onClose
       id: 'metamask',
       name: 'MetaMask',
       description: 'Connect using MetaMask',
-      icon: <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center">
-        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-        </svg>
-      </div>,
+      icon: (
+        <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center">
+          <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M22.05 9.656h-4.126L16.312 7.44l-.88 1.378 2.27 2.838h4.348z"/>
+            <path d="M1.95 9.656h4.126l1.612-2.216.88 1.378-2.27 2.838H1.95z"/>
+            <path d="M12 2.25L9.656 7.44h4.688L12 2.25z"/>
+            <path d="M12 21.75l2.344-5.19H9.656L12 21.75z"/>
+            <path d="M16.312 16.56l-2.656-2.838h-3.312L7.688 16.56 12 21.75l4.312-5.19z"/>
+            <path d="M7.688 7.44l2.656 2.838h3.312l2.656-2.838L12 2.25 7.688 7.44z"/>
+          </svg>
+        </div>
+      ),
       connector: metaMask(),
     },
     {
@@ -153,13 +165,15 @@ const WalletConnectModal: React.FC<WalletConnectModalProps> = ({ isOpen, onClose
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+             style={{ zIndex: 9999 }}>
         {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-background/80 backdrop-blur-sm"
+          className="absolute inset-0 bg-black/60 backdrop-blur-md"
           onClick={onClose}
         />
         
@@ -170,7 +184,7 @@ const WalletConnectModal: React.FC<WalletConnectModalProps> = ({ isOpen, onClose
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           className="relative w-full max-w-md mx-auto"
         >
-          <Card variant="glass" className="p-6">
+          <Card variant="glass" className="p-6 bg-surface/95 border border-stroke/50 shadow-2xl">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div>
@@ -194,8 +208,8 @@ const WalletConnectModal: React.FC<WalletConnectModalProps> = ({ isOpen, onClose
             {isConnected ? (
               /* Connected State */
               <div className="space-y-4">
-                <div className="p-4 rounded-xl bg-success/10 border border-success/30">
-                  <p className="text-success text-center">
+                <div className="p-4 rounded-xl bg-success/20 border border-success/50 shadow-lg">
+                  <p className="text-success font-medium text-center">
                     Wallet successfully connected!
                   </p>
                 </div>
@@ -220,9 +234,10 @@ const WalletConnectModal: React.FC<WalletConnectModalProps> = ({ isOpen, onClose
                     className={cn(
                       'w-full p-4 rounded-xl border transition-all duration-200',
                       'flex items-center gap-4 text-left',
-                      'hover:bg-surface-hover hover:border-stroke-light',
+                      'bg-surface/80 border-stroke/70',
+                      'hover:bg-surface-hover hover:border-stroke-light hover:shadow-lg',
                       'disabled:opacity-50 disabled:cursor-not-allowed',
-                      option.isRecommended && 'border-primary/50 bg-primary/5',
+                      option.isRecommended && 'border-primary/60 bg-primary/10 shadow-md',
                       option.comingSoon && 'opacity-60'
                     )}
                   >
@@ -275,7 +290,8 @@ const WalletConnectModal: React.FC<WalletConnectModalProps> = ({ isOpen, onClose
             </div>
           </Card>
         </motion.div>
-      </div>
+        </div>
+      )}
     </AnimatePresence>
   );
 };
