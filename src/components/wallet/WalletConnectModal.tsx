@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Wallet, Smartphone, Globe, ExternalLink } from 'lucide-react';
@@ -32,7 +32,15 @@ const WalletConnectModal: React.FC<WalletConnectModalProps> = ({ isOpen, onClose
   const { isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const [isConnecting, setIsConnecting] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const { authenticate: authenticateFarcaster } = useFarcasterAuth();
+
+  // Close modal when successfully connected
+  useEffect(() => {
+    if (isConnected && isOpen) {
+      onClose();
+    }
+  }, [isConnected, isOpen, onClose]);
 
   // Define wallet options with social login
   const walletOptions: WalletOption[] = [
@@ -112,6 +120,7 @@ const WalletConnectModal: React.FC<WalletConnectModalProps> = ({ isOpen, onClose
     if (option.comingSoon) return;
     
     setIsConnecting(option.id);
+    setError(null); // Clear previous errors
     
     try {
       if (option.id === 'farcaster') {
@@ -120,10 +129,11 @@ const WalletConnectModal: React.FC<WalletConnectModalProps> = ({ isOpen, onClose
         await handleBaseAppLogin();
       } else if (option.connector) {
         await connect({ connector: option.connector });
-        onClose();
+        // Don't close modal here - let the useEffect handle it when isConnected becomes true
       }
     } catch (error) {
       console.error('Connection failed:', error);
+      setError(error instanceof Error ? error.message : 'Failed to connect wallet');
     } finally {
       setIsConnecting(null);
     }
@@ -274,6 +284,17 @@ const WalletConnectModal: React.FC<WalletConnectModalProps> = ({ isOpen, onClose
                   </motion.button>
                 ))}
               </div>
+            )}
+
+            {/* Error Display */}
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-4 p-3 rounded-xl bg-red-500/20 border border-red-500/50 text-red-400 text-sm"
+              >
+                {error}
+              </motion.div>
             )}
 
             {/* Footer */}
